@@ -1,0 +1,39 @@
+#+title: Model description
+
+The XML specifying the model should conform to the following assumptions about
+the data generating process:
+
+1. The epidemic data comes from a birth-death-sampling process.
+2. Sequence evolution is assumed to follow the HKY model.
+3. Clock rate fixed at \(0.00000219178\) (we are working in time units of days, assuming a clock rate of 0.0008 substitutions/site/year, the clock rate is 0.0008/365 )
+4. The natural becoming non-infectious (death) rate is \(0.05\), and this value is fixed for the whole duration.
+5. We are starting with a random starting tree and we are estimating the tree.
+6. The origin time is \(28.9\) days prior to the present, in calendar time this is the 20th of January.
+   - The /present/ is midnight on the night of the 17th--18th.
+7. The birth rate \(\lambda\) changes once on the 4th of February (14 days prior to the present).
+8. \(\sigma\) (the net removal rate) changes on the 4th and the 11th of February
+   - This change is assumed to be due to changes in surveillance.
+   - The value of \(\mu\) is assumed to remain constant as per *Assumption 4*.
+9. \(p_{\psi}\) (the proportion of removals that are sequenced) is non-zero only from the start of the 15th to the end of the 17th of February.
+10. Scheduled unsequenced samples are made at midday each day from the 20th of January to the 27th of February (inclusive).
+11. \(p_{\omega}\) (the approximate proportion of removals that appear in the time series) is zero prior to the 4th and after that changes once at the 11th.
+12. Sequence samples are uniformly distributed /within/ the day upon which they are attributed to.
+    - To avoid overlapping with a time when a parameter possibly changes value we distribute the sample times uniformly /within/ the day interval.
+    - To avoid overlapping with the observation of an element of the time series, if there are an odd number of samples, add another so none fall at midday.
+    - Some examples of how to distribute the times are given in Table [[tbl:psi-times]].
+13. Any changes to parameter values are assumed to occur at midnight.
+14. Prevalence of infectious individuals onboard is estimated every week starting the second week of the outbreak. To avoid any overlap with parameter changes times or sample times, these estimates are done at 9AM on each day of interest (date + 0.375).
+
+** Distributing unscheduled sequenced samples
+
+#+caption:  The interval of backwards time is \((n+1,n]\). \(N\) is the number of samples
+#+name: tbl:psi-times
+| Number of Samples | (Backward) Times                              |
+|-------------------+-----------------------------------------------|
+| \(1\)             | \(n+1/3\)                                     |
+| \(2\)             | \(n+2/3,n+1/3\)                               |
+| \(3\)             | \(n+1/5,n+2/5,n+3/5\)                         |
+| \(4\)             | \(n+1/5,n+2/5,n+3/5,n+4/5\)                   |
+| .                 | .                                             |
+| \(2m-1\)          | \(n+1/(2m+1),n+2/(2m+1),...,n+(2m-1)/(2m+1)\) |
+| \(2m\)            | \(n+1/(2m+1),n+2/(2m+1),...,n+2m/(2m+1)\)     |

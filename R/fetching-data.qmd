@@ -1,0 +1,257 @@
+---
+title: Data for Diamond Princess analysis
+author: Alexander E. Zarebski
+format:
+  html:
+    toc: true
+knitr:
+  opts_knit:
+    root.dir: "~/projects/diamond-princess-timtam"
+---
+
+# Summary
+
+- The current `diamond.fasta` file used in the analysis has 71
+  sequences.
+- The previous analysis lists 70 accession numbers. When I looked on
+  GenBank (via `rentrez`) I could only get 69 of the sequences.
+- It looks like we can safely ignore sequence `DP0321`.
+- The `timtamslamR` package makes sorting out times much easier.
+
+# Setting up
+
+```{r}
+library(purrr)
+library(rentrez)
+library(ape)
+library(xml2)
+library(stringr)
+library(timtamslamR)
+```
+
+If you don't have `timtamslamR`, you can install it with devtools:
+
+```r
+devtools::install_github("aezarebski/timtamslamR")
+```
+
+# Data
+
+```{r}
+#| echo: false
+## By default, `rentrez` returns fetched data as an `XML` object from
+## the XML package, rather than as an `xml_node` from the `xml2`
+## package, which is much easier to work with, so I'll add a helper
+## here to move between them.
+fetch_as_xml <- function(...) {
+  temp_file <- tempfile()
+  on.exit(file.remove(temp_file))
+
+  entrez_obj <- entrez_fetch(
+    ...,
+    rettype = "xml",
+    parsed = TRUE
+  )
+  XML::saveXML(entrez_obj, file = temp_file)
+  return(xml2::read_xml(temp_file))
+}
+```
+
+Define a couple of file paths where we can store the data. Here we
+have a copy of the sequence accession numbers taken from Appendix G of
+Andréoletti, Zwaans et al (2022).
+
+```{r}
+entrez_fasta <- "data/entrez-result.fasta"
+entrez_xml <- "data/entrez.xml"
+diamond_fasta <- "data/diamond.fasta"
+
+accession_numbers <- c(
+  "LC570961.1","LC570962.1","LC570965.1","LC570967.1","LC570968.1",
+  "LC570969.1","LC570970.1","LC570971.1","LC570972.1","LC570973.1",
+  "LC570974.1","LC570975.1","LC570976.1","LC570977.1","LC570978.1",
+  "LC570979.1","LC570980.1","LC570981.1","LC570982.1","LC570983.1",
+  "LC570984.1","LC570985.1","LC570986.1","LC570987.1","LC570988.1",
+  "LC570989.1","LC570990.1","LC570991.1","LC570992.1","LC570993.1",
+  "LC570994.1","LC570995.1","LC570996.1","LC570997.1","LC570998.1",
+  "LC570999.1","LC571000.1","LC571002.1","LC571003.1","LC571004.1",
+  "LC571005.1","LC571006.1","LC571007.1","LC571008.1","LC571009.1",
+  "LC571010.1","LC571011.1","LC571012.1","LC571013.1","LC571014.1",
+  "LC571017.1","LC571019.1","LC571020.1","LC571022.1","LC571023.1",
+  "LC571024.1","LC571025.1","LC571028.1","LC571030.1","LC571031.1",
+  "LC571032.1","LC571034.1","LC571035.1","LC571036.1","LC571037.1",
+  "LC571038.1","LC571039.1","LC571040.1","LC571041.1"
+)
+```
+
+## Downloading data with R
+
+We can then download these sequences from what should be the GenBank
+database using the `rentrez` package. To avoid unnecessary calls to
+the database we can check if this data already exists locally.
+
+```{r}
+entrez_obj <- fetch_as_xml(db = "nucleotide", id = accession_numbers)
+```
+
+## Creating initial FASTA
+
+We want a FASTA file that has identifiers consisting of the accession
+number, the isolate name (i.e., the "DPXXXX" name) and the collection
+date. The following XPath queries and the `text_from_nodes` function
+simplify the task of extracting the information.
+
+```{r}
+collection_date_xp <-
+  "//GBQualifier[GBQualifier_name[text()='collection_date']]/GBQualifier_value"
+primary_accession_xp <- "//GBSeq_primary-accession"
+isolate_xp <-
+  "//GBQualifier[GBQualifier_name[text()='isolate']]/GBQualifier_value"
+sequence_xp <- "//GBSeq_sequence"
+
+text_from_nodes <- function(nodeset, xpath) {
+    return(xml_text(xml_find_all(nodeset, xpath)))
+}
+
+seq_nodes <- entrez_obj |> xml_find_all("//GBSeq")
+
+collection_dates <-
+  text_from_nodes(seq_nodes, collection_date_xp)
+
+primary_accessions <-
+  text_from_nodes(seq_nodes, primary_accession_xp)
+
+isolate_names <-
+  text_from_nodes(seq_nodes, isolate_xp)
+
+sequences <-
+  text_from_nodes(seq_nodes, sequence_xp) |>
+  map(tolower) |>
+  map(strsplit, "") |>
+  map(unlist)
+```
+
+Use a `DNAbin` to make it easier to write this to FASTA.
+
+```{r}
+dna <- as.DNAbin(sequences)
+names(dna) <- str_c(primary_accessions,
+                    isolate_names,
+                    collection_dates,
+                    sep = "_")
+
+write.dna(dna, file = entrez_fasta, format = "fasta")
+```
+
+## Create an alignment and mask questionable parts of the genome
+
+First we need something to align against, so we will pull the same
+sequence as used before.
+
+```r
+reference_genome_xml <-
+  fetch_as_xml(db = "nucleotide", id = "MN908947")
+```
+
+## Give up, cheat and use the existing alignment
+
+TODO It would be very nice to be able to have the subsequent steps of
+the original analysis included here, but until this can be
+accomplished we can just cheat and rename the existing alignment.
+
+```{r}
+old_msa <- read.FASTA("data/diamond.fasta")
+old_names <- names(old_msa)
+new_msa <- read.FASTA(entrez_fasta)
+new_names <- names(new_msa)
+
+renamed_msa <- list()
+## Use old names for iterations to keep the same order as in the old
+## MSA.
+for (seq_name in names(old_msa)) {
+  isolate_name <- str_extract(seq_name, "DP[0-9]{4}")
+  if (any(str_detect(string = new_names, pattern = isolate_name))) {
+    old_ix <- which(str_detect(string = old_names,
+                               pattern = isolate_name))
+    new_ix <- which(str_detect(string = new_names,
+                               pattern = isolate_name))
+    tmp <- old_msa[old_ix]
+    names(tmp) <- new_names[new_ix]
+    renamed_msa <- c(renamed_msa, list(tmp))
+  }
+}
+renamed_msa <- do.call(what = c, args = renamed_msa)
+
+write.FASTA(renamed_msa, file = "data/cheating.fasta")
+```
+
+```{r}
+#| echo: false
+## Frustratingly, this has written the genomes in upper case, so we
+## need to create another version with the lower case to get the same
+## results as before. Put all the sequences in lower case to help
+## check diff.
+tmpA <- readLines("data/cheating.fasta")
+is_id <- str_detect(tmpA, "^>")
+tmpB <- character(length(tmpA))
+for (ix in seq_along(tmpA)) {
+  if (is_id[ix]) {
+    tmpB[ix] <- tmpA[ix]
+  } else {
+    tmpB[ix] <- tolower(tmpA[ix])
+  }
+}
+writeLines(tmpB, "data/cheating.fasta")
+```
+
+## Use timtamslamR to put time stamps on the MSA
+
+```{r}
+seqs_calendar <- read_fasta("data/cheating.fasta")
+```
+
+The figure below shows the number of sequences obtained on each date.
+
+```{r}
+#| echo: false
+plot_dates(seqs_calendar)
+```
+
+We can use method A to assign uniformly times to the sequences in a
+way that avoids conflicts with the timing of rate changes or the time
+series of unsequenced cases.
+
+```{r}
+seqs_timed <- rename_dates_to_times_a(seqs_calendar)
+write_fasta(seqs_timed, "data/time-stamped-diamond.fasta")
+```
+
+The figure below shows the new time stamps for each of the sequences.
+
+```{r}
+#| echo: false
+plot_times(seqs_timed)
+```
+
+## Time stamp the time series of unsequenced cases
+
+The time of the last sequence is needed to time stamp the time series.
+We put the time series measurements at midday on the calendar date
+indicated by the CSV and then adjust for the difference in the time of
+the last sequenced sample which is used as the _present_.
+
+```{r}
+present_time <- get_present(seqs_calendar, seqs_timed)
+time_series_calendar <- read.csv("data/time-series-cases.csv")
+time_series_timed <-
+  rename_time_series(present_time, time_series_calendar)
+write.csv(time_series_timed, "data/time-series-cases-timed.csv")
+```
+
+# Creating BEAST2 XML
+
+TODO Describe how to go from the (timed) sequence and time series data
+to the final XML that we give to BEAST2.
+
+<!--  LocalWords:  GenBank XPath CSV
+ -->

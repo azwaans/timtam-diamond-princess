@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<project name="diamond" basedir=".">
+
+  <description>
+    Diamond Princess COVID-19 analysis
+    ==================================
+
+    Workflow
+    --------
+
+    0. ant setuplib
+    1. *Install TimTam (and feast) via BEAUti (by hand!)*
+    2. ant preprocess (if you are generating the XML from scratch)
+    3. ant mcmc
+    4. ant postprocess
+
+  </description>
+
+    <property name="numChains" value="1" />
+    <property name="chainLen" value="10000000" />
+
+    <!-- Here is a short chain length for testing -->
+    <!-- <property name="chainLen" value="200000" /> -->
+
+    <path id="classpath">
+        <fileset dir="lib" includes="**/*.jar" />
+    </path>
+
+    <target name="beauti2.7.3">
+        <exec executable="sh">
+            <arg path="lib/beast/bin/beauti" />
+        </exec>
+    </target>
+
+    <target name="mcmc2.7.3">
+        <echo>Running the MCMC sampler...</echo>
+        <exec executable="sh">
+          <arg path="lib/beast/bin/beast" />
+	  <arg line="-statefile ${stateFile}" />
+          <arg line="-seed ${seed}" />
+          <arg line="-overwrite" />
+	  <arg line="-D 'chainLength=${chainLength}'" />
+          <arg path="${beastXML}" />
+        </exec>
+    </target>
+
+    <target name="setuplib" depends="setuplib2.7.3" />
+    <target name="setuplib2.7.3" depends="get-beast2.7.3,get-tracer1.7.2" />
+
+    <target name="tracer">
+        <java fork="true" jar="lib/tracer/lib/tracer.jar">
+        </java>
+    </target>
+
+    <target name="get-tracer1.7.2">
+        <mkdir dir="lib" />
+        <get src="https://github.com/beast-dev/tracer/releases/download/v1.7.2/Tracer_v1.7.2.tgz" dest="lib/Tracer_v1.7.2.tgz" verbose="on" />
+        <untar src="lib/Tracer_v1.7.2.tgz" dest="lib/tracer" compression="gzip" />
+    </target>
+
+    <target name="get-beast2.7.3">
+        <mkdir dir="lib" />
+        <get src="https://github.com/CompEvol/beast2/releases/download/v2.7.3/BEAST.v2.7.3.Linux.x86.tgz" dest="lib/BEAST.v2.7.3.Linux.x86.tgz" verbose="on" />
+        <untar src="lib/BEAST.v2.7.3.Linux.x86.tgz" dest="lib/" compression="gzip" />
+        <chmod file="lib/beast/bin/beast" perm="750" />
+        <chmod file="lib/beast/bin/beauti" perm="750" />
+        <chmod file="lib/beast/jre/bin/java" perm="750" />
+    </target>
+
+    <target name="preprocessing">
+      <exec executable="Rscript">
+	<arg path="R/preprocessing-part-1.R" />
+      </exec>
+      <exec executable="Rscript">
+	<arg path="R/preprocessing-part-2.R" />
+      </exec>
+      <exec executable="Rscript">
+	<arg path="R/preprocessing-part-3.R" />
+      </exec>
+    </target>
+
+    <target name="mcmc">
+      <exec executable="bash">
+        <arg path="scripts/run-mcmc.sh" />
+        <arg line="${numChains}" />
+        <arg line="${chainLen}" />
+      </exec>
+    </target>
+
+    <target name="postprocess">
+      <exec executable="bash">
+        <arg path="scripts/postprocess-samples.sh" />
+      </exec>
+    </target>
+
+</project>

@@ -1,0 +1,81 @@
+#+title: Diamond Princess COVID-19 analysis
+
+This repository provides code to run an analysis of data collected
+during an outbreak of SARS-CoV-2 onboard the Diamond Princess. The
+analysis is based off a previous analysis from [[https://doi.org/10.1093/sysbio/syac037][Andréoletti /et al/
+(2022)]] and uses the [[https://aezarebski.github.io/timtam/][TimTam]] package for BEASTv2.
+
+* Model
+
+See the [[file:./model.org]] document which describes the model.
+
+* Results
+
+#+caption: Figures and files
+#+name: tbl:figure-script
+| Results figure       | R script that generated it                                      |
+|----------------------+-----------------------------------------------------------------|
+| [[fig:data]]             | [[./R/preprocessing-part-3.R]]                                      |
+| [[fig:result-timeline]]  | [[./R/combine-ltt-and-histories.R]] and [[./R/postprocessing-part-4.R]] |
+
+#+caption: Data
+#+name: fig:data
+#+attr_org: :width 500px
+#+attr_html: :width 400px
+[[./out/manuscript/data-plot.png]]
+
+#+caption: Timeline
+#+name: fig:result-timeline
+#+attr_org: :width 500px
+#+attr_html: :width 400px
+[[./out/manuscript/timeline.png]]
+
+* Running analysis
+
+This assumes that you have [[https://ant.apache.org/][Apache Ant]], [[https://cran.r-project.org/][R]] and [[https://www.java.com/en/][Java]] installed.
+
+** Getting help
+
+The computations are coordinated with Ant. To get a list of the
+various targets it knows how to build run the following:
+
+#+begin_src sh
+  ant -p
+#+end_src
+
+** Setting up BEAST2
+
+#+begin_src sh
+  ant setuplib
+#+end_src
+
+Note that this will only set up the relevant BEAST tools. You will
+still need to install the TimTam package via BEAUti.
+
+** Running the analysis
+
+*** Optional: generation of XML
+
+#+begin_src sh
+  ant preprocess	# proprocess data
+  ant beauti		# generate XML
+#+end_src
+
+Getting to the final XML files used is not an entirely automated
+process, and making it so would likely be counter productive.
+
+*** MCMC
+
+#+begin_src sh
+  ant mcmc
+#+end_src
+
+*WARNING:* The XML reads sequences in from =data/diamond.fasta= which
+is not part of this repository. See the [[file:./data/readme.org][README]] in that directory for
+details.
+
+*** Postprocessing
+
+#+begin_src sh
+  ant postprocess
+#+end_src
