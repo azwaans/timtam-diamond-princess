@@ -14,8 +14,8 @@
 #'
 #' $ ./R/combine-ltt-and-histories.R -v \\
 #' -x xml/timtam-timeseries-stage-2-prevalence.xml \\
-#' -t out/timeseries/log_files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories_diamond.1687361450300 \\
-#' -p out/timeseries/log_files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.1687361450300.log \\
+#' -t out/timeseries/log_files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories_diamond.1 \\
+#' -p out/timeseries/log_files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.1.log \\
 #' -o out/timeseries/foo.csv
 #'
 #' Note

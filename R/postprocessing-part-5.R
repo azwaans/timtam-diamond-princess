@@ -24,7 +24,7 @@ palette_purple <- "#7570B3"
 ## Configuration
 ## =============
 
-param_log_file <- "./out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories_fasta.1687361450300.log" # nolint
+param_log_file <- "./out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories_fasta.1.log" # nolint
 output_file <- "./out/manuscript/diagnostics.txt"
 
 ## Check that the input files exist
