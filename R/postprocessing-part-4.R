@@ -170,17 +170,40 @@ plot_ribbonstep_df <-
                      ymins = head(plot_df$CI_low, -1),
                      ymaxs = head(plot_df$CI_high, -1))
 
-#' These estimates where obtained from figures in the manuscript after
-#' extracting the values with WebPlotDigitizer.
 
+## ===================================================================
+## Create some bogus data to test the visualisation with the first
+## data frame provides a point estimate and the second a range.
+## ===================================================================
+plot_df <-
+  data.frame(
+    xs = r0_change_dates,
+    ys = 0.5 * (c(1.02, 0.97, 0.891, 0.891) +
+                c(7.54, 1.48, 1.11, 1.11))
+  )
+plot_rbn_df <-
+  make_ribbonstep_df(
+  xs = r0_change_dates,
+  ymins = c(1.02, 0.97, 0.891) + rexp(n = 3, rate = 10),
+  ymaxs = c(7.54, 1.48, 1.11) - rexp(n = 3, rate = 10)
+  )
+## ===================================================================
+
+## True values of estimates have been hard-coded from the manuscripts.
 vaughan2020estimates_df <- data.frame(
-  date = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
-  point_est = c(5.37, 1.84, 1.84)
+  xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
+  ys = c(5.37, 1.84, 1.84)
 )
+vaughan2020estimates_rbn_df <-
+  make_ribbonstep_df(
+  xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
+  ymins = c(5.37, 1.84),
+  ymaxs = c(5.37, 1.84)
+  )
 
-andreoletti2022estimates_stp_df <- data.frame(
-  date = plot_df$date,
-  point_est = c(4.01, 1.22, 0.996, 0.996)
+andreoletti2022estimates_df <- data.frame(
+  xs = r0_change_dates,
+  ys = c(4.01, 1.22, 0.996, 0.996)
 )
 andreoletti2022estimates_rbn_df <- make_ribbonstep_df(
   xs = r0_change_dates,
@@ -188,48 +211,56 @@ andreoletti2022estimates_rbn_df <- make_ribbonstep_df(
   ymaxs = c(7.54, 1.48, 1.11)
 )
 
-plot_r0 <-
+## Using a function ensures that the style of the figures is
+## consistent across each set of estimates and makes it easier to
+## construct the figures.
+make_r0_plot <- function(rbn_df, est_df, colour, label) {
   ggplot() +
-  geom_step(data = vaughan2020estimates_df,
-            mapping = aes(x = date, y = point_est, colour = "vaughan"),
-            linetype = "dashed",
-            linewidth = 0.5) +
-  geom_ribbon(data = andreoletti2022estimates_rbn_df,
-              mapping = aes(x = x, ymin = ymin, ymax = ymax),
-              color = palette_purple,
-              fill = palette_purple,
-              linetype = "dotted",
-              alpha = 0.0) +
-  geom_step(data = andreoletti2022estimates_stp_df,
-            mapping = aes(x = date, y = point_est, colour = "andreoletti"),
-            linetype = "dashed",
-            linewidth = 0.5) +
-  geom_ribbon(data = plot_ribbonstep_df,
-              mapping = aes(x = x, ymin = ymin, ymax = ymax),
-              color = palette_green,
-              fill = palette_green,
-              linewidth = 0.5,
-              alpha = 0.2) +
-  geom_step(data = plot_df,
-            mapping = aes(x = date, y = point_est, colour = "timtam")) +
-  scale_y_continuous(name = "Reproduction number",
-                     breaks = c(1, 2, 4, 6)) +
-  scale_x_date(limits = date_range) +
-  scale_color_manual(values = c("vaughan" = palette_orange,
-                                "andreoletti" = palette_purple,
-                                "timtam" = palette_green),
-                     name = NULL,
-                     labels = c("andreoletti" = "Andreoletti et al (2022)",
-                                "vaughan" = "Vaughan et al (2020)",
-                                "timtam" = "Timtam")) +
-  theme_bw() +
-  theme(
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    legend.title = element_text(size = 10),
-    legend.text = element_text(size = 8),
-    legend.position = c(0.7, 0.7)
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    geom_ribbon(data = rbn_df,
+                mapping = aes(x = x, ymin = ymin, ymax = ymax),
+                color = colour,
+                fill = colour, alpha = 0.3,
+                linetype = "solid", linewidth = 0.75) +
+    geom_step(data = est_df,
+              mapping = aes(x = xs, y = ys),
+              color = colour,
+              size = 0.75) +
+    geom_text(data = data.frame(x = as.Date("2020-03-01"), y = 7.5),
+              mapping = aes(x = x, y = y, label = label),
+              size = 7,
+              hjust = 1, vjust = 1,
+              color = colour) +
+    scale_y_continuous(limits = c(0, 8)) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+}
+
+plot_r0_vaughan2020estimates <-
+  make_r0_plot(vaughan2020estimates_rbn_df,
+               vaughan2020estimates_df,
+               palette_orange,
+               "Vaughan et al. (2020)")
+
+plot_r0_andreoletti2022estimates <-
+  make_r0_plot(andreoletti2022estimates_rbn_df,
+               andreoletti2022estimates_df,
+               palette_purple,
+               "Andreoletti et al. (2022)")
+
+plot_r0_timtam <-
+  make_r0_plot(plot_rbn_df,
+               plot_df,
+               palette_green,
+               "Timtam")
+plot_r0 <-
+  plot_grid(
+    plot_r0_vaughan2020estimates,
+    plot_r0_andreoletti2022estimates,
+    plot_r0_timtam,
+    ncol = 1, align = "v", axis = "b"
   )
 
 combined_plot <- plot_grid(plot_r0, plot_prevalence, ncol = 1, align = "v", axis = "b")
