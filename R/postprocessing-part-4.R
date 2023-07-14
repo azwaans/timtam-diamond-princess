@@ -235,7 +235,8 @@ make_r0_plot <- function(rbn_df, est_df, colour, label, hjust, y_text_p = TRUE) 
     scale_y_continuous(limits = c(0, 9)) +
     theme_bw() +
     theme(axis.title = element_blank(),
-          axis.text = element_text(size = 7, angle = -40)) +
+          axis.text = element_text(size = 7),
+          axis.text.x = element_text(angle = -40)) +
           ## axis.ticks.x = element_blank()) +
     {if (!y_text_p)
        theme(axis.text.y = element_blank(),
@@ -248,7 +249,11 @@ plot_r0_vaughan2020estimates <-
                vaughan2020estimates_df,
                palette_orange,
                "Vaughan et al. (2020)",
-               hjust = 1)
+               hjust = 1) +
+  scale_y_continuous(limits = c(0, 9),
+                     breaks = 1:8,
+                     name = "Reproduction number") +
+  theme(axis.title.y = element_text(size = 10))
 
 plot_r0_andreoletti2022estimates <-
   make_r0_plot(andreoletti2022estimates_rbn_df,
@@ -271,7 +276,7 @@ plot_r0 <-
     plot_r0_vaughan2020estimates,
     plot_r0_andreoletti2022estimates,
     plot_r0_timtam,
-    ncol = 3
+    ncol = 3, padding = unit(0, "mm")
   )
 
 ggsave(filename = "tweaked-r0-plot.png",
