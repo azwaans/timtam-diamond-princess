@@ -6,7 +6,7 @@ hash of the file is
 
 #+begin_src
 $ sha256sum diamond.fasta
-1141e4fabe2bfe014d01f3c25cb34625497ef43154450139370b5f7593af8235  diamond.fasta
+284f96459938df0efa2a19ba8fe9e1acd0a73300fb51f11f91d4550e6c1a19b7  diamond.fasta
 #+end_src
 
 Yes, splitting the model and the data in this fashion goes against

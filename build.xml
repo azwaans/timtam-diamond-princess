@@ -17,7 +17,7 @@
   </description>
 
     <property name="numChains" value="1" />
-    <property name="chainLen" value="10000000" />
+    <property name="chainLen" value="5000000" />
 
     <!-- Here is a short chain length for testing -->
     <!-- <property name="chainLen" value="200000" /> -->
