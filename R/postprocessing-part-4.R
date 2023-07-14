@@ -20,6 +20,7 @@ library(ggplot2)
 library(xml2)
 library(dplyr)
 library(cowplot)
+library(gridExtra)
 library(RColorBrewer)
 palette <- brewer.pal(5, "Dark2")[1:3]
 palette_green <- "#1B9E77"
@@ -214,59 +215,76 @@ andreoletti2022estimates_rbn_df <- make_ribbonstep_df(
 ## Using a function ensures that the style of the figures is
 ## consistent across each set of estimates and makes it easier to
 ## construct the figures.
-make_r0_plot <- function(rbn_df, est_df, colour, label) {
+make_r0_plot <- function(rbn_df, est_df, colour, label, hjust, y_text_p = TRUE) {
   ggplot() +
     geom_hline(yintercept = 1, linetype = "dashed") +
     geom_ribbon(data = rbn_df,
                 mapping = aes(x = x, ymin = ymin, ymax = ymax),
-                color = colour,
                 fill = colour, alpha = 0.3,
-                linetype = "solid", linewidth = 0.75) +
+                linetype = 0) +
     geom_step(data = est_df,
               mapping = aes(x = xs, y = ys),
               color = colour,
-              size = 0.75) +
-    geom_text(data = data.frame(x = as.Date("2020-03-01"), y = 7.5),
+              size = 0.5) +
+    ## make sure that the text is aligned to the right of the specified point
+    geom_text(data = data.frame(x = as.Date("2020-02-20"), y = 8.5),
               mapping = aes(x = x, y = y, label = label),
-              size = 7,
-              hjust = 1, vjust = 1,
+              size = 4,
+              hjust = hjust,
               color = colour) +
-    scale_y_continuous(limits = c(0, 8)) +
+    scale_y_continuous(limits = c(0, 9)) +
     theme_bw() +
     theme(axis.title = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
+          axis.text = element_text(size = 7, angle = -40)) +
+          ## axis.ticks.x = element_blank()) +
+    {if (!y_text_p)
+       theme(axis.text.y = element_blank(),
+             axis.ticks.y = element_blank())
+    }
 }
 
 plot_r0_vaughan2020estimates <-
   make_r0_plot(vaughan2020estimates_rbn_df,
                vaughan2020estimates_df,
                palette_orange,
-               "Vaughan et al. (2020)")
+               "Vaughan et al. (2020)",
+               hjust = 1)
 
 plot_r0_andreoletti2022estimates <-
   make_r0_plot(andreoletti2022estimates_rbn_df,
                andreoletti2022estimates_df,
                palette_purple,
-               "Andreoletti et al. (2022)")
+               "Andreoletti et al. (2022)",
+               hjust = 0.9, y_text_p = FALSE)
 
 plot_r0_timtam <-
   make_r0_plot(plot_rbn_df,
                plot_df,
                palette_green,
-               "Timtam")
+               "Timtam",
+               hjust = 2.8, y_text_p = FALSE)
+
+## We use gridExtra::grid.arrange() because it is more flexible than
+## cowplot::plot_grid().
 plot_r0 <-
-  plot_grid(
+  grid.arrange(
     plot_r0_vaughan2020estimates,
     plot_r0_andreoletti2022estimates,
     plot_r0_timtam,
-    ncol = 1, align = "v", axis = "b"
+    ncol = 3
   )
 
-combined_plot <- plot_grid(plot_r0, plot_prevalence, ncol = 1, align = "v", axis = "b")
-
-ggsave(filename = output_file,
-       plot = combined_plot,
-       height = 14.8,
-       width = 10.5,
+ggsave(filename = "tweaked-r0-plot.png",
+       plot = plot_r0,
+       height = 0.5 * 14.8,
+       width = 21.0,
        units = "cm")
+
+
+## combined_plot <- plot_grid(plot_r0, plot_prevalence, ncol = 1, align = "v", axis = "b")
+
+## ggsave(filename = output_file,
+##        plot = combined_plot,
+##        height = 14.8,
+##        width = 10.5,
+##        units = "cm")
