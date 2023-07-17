@@ -195,6 +195,8 @@ vaughan2020estimates_df <- data.frame(
   xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
   ys = c(5.37, 1.84, 1.84)
 )
+## TODO The values in this data frame need to be updated when we have
+## the values of the credible intervals.
 vaughan2020estimates_rbn_df <-
   make_ribbonstep_df(
   xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
