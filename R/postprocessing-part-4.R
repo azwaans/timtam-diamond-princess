@@ -249,11 +249,7 @@ plot_r0_vaughan2020estimates <-
                vaughan2020estimates_df,
                palette_orange,
                "Vaughan et al. (2020)",
-               hjust = 1) +
-  scale_y_continuous(limits = c(0, 9),
-                     breaks = 1:8,
-                     name = "Reproduction number") +
-  theme(axis.title.y = element_text(size = 10))
+               hjust = 1, y_text_p = FALSE)
 
 plot_r0_andreoletti2022estimates <-
   make_r0_plot(andreoletti2022estimates_rbn_df,
@@ -267,15 +263,19 @@ plot_r0_timtam <-
                plot_df,
                palette_green,
                "Timtam",
-               hjust = 2.8, y_text_p = FALSE)
+               hjust = 2.8) +
+  scale_y_continuous(limits = c(0, 9),
+                     breaks = 1:8,
+                     name = "Reproduction number") +
+  theme(axis.title.y = element_text(size = 10))
 
 ## We use gridExtra::grid.arrange() because it is more flexible than
 ## cowplot::plot_grid().
 plot_r0 <-
   grid.arrange(
-    plot_r0_vaughan2020estimates,
-    plot_r0_andreoletti2022estimates,
     plot_r0_timtam,
+    plot_r0_andreoletti2022estimates,
+    plot_r0_vaughan2020estimates,
     ncol = 3, padding = unit(0, "mm")
   )
 
