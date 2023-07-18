@@ -31,7 +31,7 @@ palette_purple <- "#7570B3"
 
 beast_xml <- "./xml/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.xml" # nolint
 hist_hdi_file <- "./out/prevalence-estimate-HKY-weekly-histories.csv"
-param_log_file <- "./out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.1.log" # nolint
+param_log_file <- "./out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.15607.log" # nolint
 date_of_last_seq <- "2020-02-17"
 date_range <- as.Date(c("2020-01-20", "2020-02-27"))
 output_file <- "./out/manuscript/timeline.png"

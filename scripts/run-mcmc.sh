@@ -25,12 +25,16 @@ CHAIN_LEN=$2
 BEAST_XML=xml/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.xml
 
 IX=1
+# use a random seed number 
+# ID=$RANDOM
+ID=15607
 PIDS=() # Array to hold process IDs
 
 while [ $IX -le $NUM_CHAINS ]
 do
     ant -DstateFile=out/tmp-timtam-chain-num-"$IX".xml.state -Dseed=$IX  -DchainLength=$CHAIN_LEN -DbeastXML=$BEAST_XML mcmc2.7.3 & PIDS+=($!)
     ((IX++))
+    ((ID++))
 done
 
 # Wait for all processes to complete

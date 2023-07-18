@@ -1,2 +1,2 @@
 [1] "Minimum effective sample sizes:"
-[1] 1075.403
+[1] 389.6
