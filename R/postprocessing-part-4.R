@@ -193,15 +193,14 @@ plot_rbn_df <-
 ## True values of estimates have been hard-coded from the manuscripts.
 vaughan2020estimates_df <- data.frame(
   xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
-  ys = c(5.37, 1.84, 1.84)
+  ys = c(5.361, 1.84, 1.84)
 )
-## TODO The values in this data frame need to be updated when we have
-## the values of the credible intervals.
+
 vaughan2020estimates_rbn_df <-
   make_ribbonstep_df(
-  xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
-  ymins = c(5.37, 1.84),
-  ymaxs = c(5.37, 1.84)
+    xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
+    ymins = c(7.6752, 3.2938),
+    ymaxs = c(2.1708, 1.5002)
   )
 
 andreoletti2022estimates_df <- data.frame(
