@@ -32,7 +32,7 @@ PIDS=() # Array to hold process IDs
 
 while [ $IX -le $NUM_CHAINS ]
 do
-    ant -DstateFile=out/tmp-timtam-chain-num-"$IX".xml.state -Dseed=$IX  -DchainLength=$CHAIN_LEN -DbeastXML=$BEAST_XML mcmc2.7.3 & PIDS+=($!)
+    ant -DstateFile=out/tmp-timtam-chain-num-"$IX".xml.state -Dseed=$ID  -DchainLength=$CHAIN_LEN -DbeastXML=$BEAST_XML mcmc2.7.3 & PIDS+=($!)
     ((IX++))
     ((ID++))
 done
