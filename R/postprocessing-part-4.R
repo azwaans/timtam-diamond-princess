@@ -35,7 +35,8 @@ hist_hdi_file <- "./out/prevalence-estimate-HKY-weekly-histories.csv"
 param_log_file <- "./out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.15607.log" # nolint
 date_of_last_seq <- "2020-02-17"
 date_range <- as.Date(c("2020-01-20", "2020-02-27"))
-output_file <- "./out/manuscript/timeline.png"
+output_png_r0 <- "./out/manuscript/r0-estimates.png"
+output_png_prev <- "./out/manuscript/prevalence-estimates.png"
 
 ## Check that the input files exist
 if (!file.exists(beast_xml)) {
@@ -109,11 +110,8 @@ hist_hdi_df <-
 
 #' These estimates where obtained from figures in the manuscript after
 #' extracting the values with WebPlotDigitizer.
-#'
-#' TODO I'm not sure if these values for the prevalence account for
-#' the LTT value. If they did not it would go some way to explaining
-#' the difference in the values.
 
+## Andréoletti
 andreoletti2022estimates_prev_df <-
   data.frame(
     history_dates = hist_hdi_df$history_dates,
@@ -136,6 +134,15 @@ plot_prevalence <-
   geom_point(andreoletti2022estimates_prev_df,
              mapping = aes(x = history_dates, y = mean),
              colour = palette_purple) +
+  geom_label(data = data.frame(x = rep(as.Date("2020-01-21"), 2),
+                               y = c(80,95),
+                               label = c("Andréoletti et al. (2022)",
+                                         "Timtam")),
+             mapping = aes(x = x, y = y, label = label),
+             size = 4,
+             hjust = 0, # so text is left aligned
+             fill = "white",
+             color = c(palette_purple, palette_green)) +
   scale_y_continuous(name = "Prevalence") +
   scale_x_date(limits = date_range) +
   theme_bw() +
@@ -208,13 +215,14 @@ make_r0_plot <- function(rbn_df, est_df, colour, label, hjust, y_text_p = TRUE) 
     geom_step(data = est_df,
               mapping = aes(x = xs, y = ys),
               color = colour,
-              size = 0.5) +
+              linewidth = 0.5) +
     ## make sure that the text is aligned to the right of the specified point
-    geom_text(data = data.frame(x = as.Date("2020-02-20"), y = 8.5),
-              mapping = aes(x = x, y = y, label = label),
-              size = 4,
-              hjust = hjust,
-              color = colour) +
+    geom_label(data = data.frame(x = as.Date("2020-01-21"), y = 8.5),
+               mapping = aes(x = x, y = y, label = label),
+               size = 4,
+               hjust = 0,
+               fill = "white",
+               color = colour) +
     scale_y_continuous(limits = c(0, 9)) +
     theme_bw() +
     theme(axis.title = element_blank(),
@@ -238,7 +246,7 @@ plot_r0_andreoletti2022estimates <-
   make_r0_plot(andreoletti2022estimates_rbn_df,
                andreoletti2022estimates_df,
                palette_purple,
-               "Andreoletti et al. (2022)",
+               "Andréoletti et al. (2022)",
                hjust = 0.9, y_text_p = FALSE)
 
 plot_r0_timtam <-
@@ -267,12 +275,12 @@ plot_r0 <-
     widths = c(tmp_fudge_factor, 1.0, 1.0)
   )
 
-ggsave(filename = "tweaked-r0-plot.png",
+ggsave(filename = output_png_r0,
        plot = plot_r0,
        height = 7.4, width = 20,
        units = "cm")
 
-ggsave(filename = "tweaked-prev-plot.png",
+ggsave(filename = output_png_prev,
        plot = plot_prevalence,
        height = 7.4, width = 10.5, # A7
        units = "cm")
