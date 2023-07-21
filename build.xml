@@ -10,7 +10,7 @@
 
     0. ant setuplib
     1. *Install TimTam (and feast) via BEAUti (by hand!)*
-    2. ant preprocess (if you are generating the XML from scratch)
+    2. ant preprocessing (if you are generating the XML from scratch)
     3. ant mcmc
     4. ant postprocess
 
