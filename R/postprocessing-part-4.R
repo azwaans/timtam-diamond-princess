@@ -20,6 +20,7 @@ library(ggplot2)
 library(xml2)
 library(dplyr)
 library(cowplot)
+library(gridExtra)
 library(RColorBrewer)
 palette <- brewer.pal(5, "Dark2")[1:3]
 palette_green <- "#1B9E77"
@@ -34,7 +35,8 @@ hist_hdi_file <- "./out/prevalence-estimate-HKY-weekly-histories.csv"
 param_log_file <- "./out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.15607.log" # nolint
 date_of_last_seq <- "2020-02-17"
 date_range <- as.Date(c("2020-01-20", "2020-02-27"))
-output_file <- "./out/manuscript/timeline.png"
+output_png_r0 <- "./out/manuscript/r0-estimates.png"
+output_png_prev <- "./out/manuscript/prevalence-estimates.png"
 
 ## Check that the input files exist
 if (!file.exists(beast_xml)) {
@@ -108,11 +110,8 @@ hist_hdi_df <-
 
 #' These estimates where obtained from figures in the manuscript after
 #' extracting the values with WebPlotDigitizer.
-#'
-#' TODO I'm not sure if these values for the prevalence account for
-#' the LTT value. If they did not it would go some way to explaining
-#' the difference in the values.
 
+## Andréoletti
 andreoletti2022estimates_prev_df <-
   data.frame(
     history_dates = hist_hdi_df$history_dates,
@@ -135,12 +134,22 @@ plot_prevalence <-
   geom_point(andreoletti2022estimates_prev_df,
              mapping = aes(x = history_dates, y = mean),
              colour = palette_purple) +
+  geom_label(data = data.frame(x = rep(as.Date("2020-01-21"), 2),
+                               y = c(80,95),
+                               label = c("Andréoletti et al. (2022)",
+                                         "Timtam")),
+             mapping = aes(x = x, y = y, label = label),
+             size = 4,
+             hjust = 0, # so text is left aligned
+             fill = "white",
+             color = c(palette_purple, palette_green)) +
   scale_y_continuous(name = "Prevalence") +
   scale_x_date(limits = date_range) +
   theme_bw() +
   theme(
     axis.title.x = element_blank(),
-    axis.text.x = element_text(angle = 0, hjust = 0)
+    axis.text = element_text(size = 7),
+    axis.text.x = element_text(angle = -40, hjust = 0)
   )
 
 #' Because we want to be able to compare things on calendar times we need to do
@@ -164,23 +173,28 @@ plot_df$point_est <- colMeans(post_r0_df)
 #' Because we don't want the step function to end too early, we duplicate the
 #' last value so it continues on until the end of the study period.
 plot_df <- rbind(plot_df, tail(plot_df, 1))
-plot_df$date <- r0_change_dates
-plot_ribbonstep_df <-
-  make_ribbonstep_df(xs = plot_df$date,
+plot_df$xs <- r0_change_dates
+plot_df$ys <- plot_df$point_est
+plot_rbn_df <-
+  make_ribbonstep_df(xs = plot_df$xs,
                      ymins = head(plot_df$CI_low, -1),
                      ymaxs = head(plot_df$CI_high, -1))
 
-#' These estimates where obtained from figures in the manuscript after
-#' extracting the values with WebPlotDigitizer.
-
 vaughan2020estimates_df <- data.frame(
-  date = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
-  point_est = c(5.37, 1.84, 1.84)
+  xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
+  ys = c(5.361, 1.84, 1.84)
 )
 
-andreoletti2022estimates_stp_df <- data.frame(
-  date = plot_df$date,
-  point_est = c(4.01, 1.22, 0.996, 0.996)
+vaughan2020estimates_rbn_df <-
+  make_ribbonstep_df(
+    xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
+    ymins = c(7.6752, 3.2938),
+    ymaxs = c(2.1708, 1.5002)
+  )
+
+andreoletti2022estimates_df <- data.frame(
+  xs = r0_change_dates,
+  ys = c(4.01, 1.22, 0.996, 0.996)
 )
 andreoletti2022estimates_rbn_df <- make_ribbonstep_df(
   xs = r0_change_dates,
@@ -188,54 +202,85 @@ andreoletti2022estimates_rbn_df <- make_ribbonstep_df(
   ymaxs = c(7.54, 1.48, 1.11)
 )
 
-plot_r0 <-
+## Using a function ensures that the style of the figures is
+## consistent across each set of estimates and makes it easier to
+## construct the figures.
+make_r0_plot <- function(rbn_df, est_df, colour, label, hjust, y_text_p = TRUE) {
   ggplot() +
-  geom_step(data = vaughan2020estimates_df,
-            mapping = aes(x = date, y = point_est, colour = "vaughan"),
-            linetype = "dashed",
-            linewidth = 0.5) +
-  geom_ribbon(data = andreoletti2022estimates_rbn_df,
-              mapping = aes(x = x, ymin = ymin, ymax = ymax),
-              color = palette_purple,
-              fill = palette_purple,
-              linetype = "dotted",
-              alpha = 0.0) +
-  geom_step(data = andreoletti2022estimates_stp_df,
-            mapping = aes(x = date, y = point_est, colour = "andreoletti"),
-            linetype = "dashed",
-            linewidth = 0.5) +
-  geom_ribbon(data = plot_ribbonstep_df,
-              mapping = aes(x = x, ymin = ymin, ymax = ymax),
-              color = palette_green,
-              fill = palette_green,
-              linewidth = 0.5,
-              alpha = 0.2) +
-  geom_step(data = plot_df,
-            mapping = aes(x = date, y = point_est, colour = "timtam")) +
-  scale_y_continuous(name = "Reproduction number",
-                     breaks = c(1, 2, 4, 6)) +
-  scale_x_date(limits = date_range) +
-  scale_color_manual(values = c("vaughan" = palette_orange,
-                                "andreoletti" = palette_purple,
-                                "timtam" = palette_green),
-                     name = NULL,
-                     labels = c("andreoletti" = "Andreoletti et al (2022)",
-                                "vaughan" = "Vaughan et al (2020)",
-                                "timtam" = "Timtam")) +
-  theme_bw() +
-  theme(
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    legend.title = element_text(size = 10),
-    legend.text = element_text(size = 8),
-    legend.position = c(0.7, 0.7)
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    geom_ribbon(data = rbn_df,
+                mapping = aes(x = x, ymin = ymin, ymax = ymax),
+                fill = colour, alpha = 0.3,
+                linetype = 0) +
+    geom_step(data = est_df,
+              mapping = aes(x = xs, y = ys),
+              color = colour,
+              linewidth = 0.5) +
+    ## make sure that the text is aligned to the right of the specified point
+    geom_label(data = data.frame(x = as.Date("2020-01-21"), y = 8.5),
+               mapping = aes(x = x, y = y, label = label),
+               size = 4,
+               hjust = 0,
+               fill = "white",
+               color = colour) +
+    scale_y_continuous(limits = c(0, 9)) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+          axis.text = element_text(size = 7),
+          axis.text.x = element_text(angle = -40)) +
+          ## axis.ticks.x = element_blank()) +
+    {if (!y_text_p)
+       theme(axis.text.y = element_blank(),
+             axis.ticks.y = element_blank())
+    }
+}
+
+plot_r0_vaughan2020estimates <-
+  make_r0_plot(vaughan2020estimates_rbn_df,
+               vaughan2020estimates_df,
+               palette_orange,
+               "Vaughan et al. (2020)",
+               hjust = 1, y_text_p = FALSE)
+
+plot_r0_andreoletti2022estimates <-
+  make_r0_plot(andreoletti2022estimates_rbn_df,
+               andreoletti2022estimates_df,
+               palette_purple,
+               "Andréoletti et al. (2022)",
+               hjust = 0.9, y_text_p = FALSE)
+
+plot_r0_timtam <-
+  make_r0_plot(plot_rbn_df,
+               plot_df,
+               palette_green,
+               "Timtam",
+               hjust = 2.85) +
+  scale_y_continuous(limits = c(0, 9),
+                     ## breaks = 1:8,
+                     name = "Reproduction number") +
+  theme(axis.title.y = element_text(size = 10))
+
+## We use gridExtra::grid.arrange() because it is more flexible than
+## cowplot::plot_grid(). The fudge factor here came from viewing
+## measuring the panel widths on my screen to ensure that they are
+## equal. The difference stems from the presence of the y-axis labels
+## in the first panel.
+tmp_fudge_factor <- 1.14
+plot_r0 <-
+  grid.arrange(
+    plot_r0_timtam,
+    plot_r0_andreoletti2022estimates,
+    plot_r0_vaughan2020estimates,
+    ncol = 3, padding = unit(0, "mm"),
+    widths = c(tmp_fudge_factor, 1.0, 1.0)
   )
 
-combined_plot <- plot_grid(plot_r0, plot_prevalence, ncol = 1, align = "v", axis = "b")
+ggsave(filename = output_png_r0,
+       plot = plot_r0,
+       height = 7.4, width = 20,
+       units = "cm")
 
-ggsave(filename = output_file,
-       plot = combined_plot,
-       height = 14.8,
-       width = 10.5,
+ggsave(filename = output_png_prev,
+       plot = plot_prevalence,
+       height = 7.4, width = 10.5, # A7
        units = "cm")

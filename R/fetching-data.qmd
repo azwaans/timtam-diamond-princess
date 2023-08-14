@@ -12,9 +12,11 @@ knitr:
 # Summary
 
 - The current `diamond.fasta` file used in the analysis has 70
-  seqs_calendar, which are all seqs_calendar published in ref: https://doi.org/10.1073/pnas.2006824117, also 
-  used Andréoletti, Zwaans et al (2022), as listed in appendix G.
-- This describes how this data is processed for analysis and how times are defined in the BEAST2 xml for timtam2.
+  `seqs_calendar` entries, which are all seqs_calendar published in
+  ref: https://doi.org/10.1073/pnas.2006824117, also used by
+  Andréoletti, Zwaans et al (2022), as listed in Appendix G.
+- This document describes how this data is processed for analysis and
+  how times are defined in the BEAST2 XML for Timtam.
 - The `timtamslamR` package makes sorting out times much easier.
 
 # Setting up
@@ -28,34 +30,70 @@ library(stringr)
 library(timtamslamR)
 ```
 
-If you don't have `timtamslamR`, you can install it with devtools:
+If you don't have `timtamslamR`, you can install it using the
+`devtools` package:
 
 ```r
 devtools::install_github("aezarebski/timtamslamR")
 ```
-The sequencing data is obtained from GISAID’s EpiCoV database (https://gisaid.org/), and aligned using Nextstrain https://docs.nextstrain.org/projects/ncov/en/latest/tutorial/custom-data.html. Using a GISAID account, the dataset is easiest retrieved in EpiCoV by searching by virus name and location:
+
+The sequencing data is obtained from GISAID's EpiCoV database
+(https://gisaid.org/), and aligned using Nextstrain
+https://docs.nextstrain.org/projects/ncov/en/latest/tutorial/custom-data.html.
+Using a GISAID account, the dataset is easiest retrieved in EpiCoV by
+searching by virus name and location:
 
 - name: DP0 (for Diamond Princess)
 - location: Japan
 
-This search should yield 71 seqs_calendar whose epi isl id numbers are listed below: 
+This search should yield 71 `seqs_calendar` records whose `epi_isl_id`
+numbers are listed below:
+
 ```{r}
-gisaid_ids <- c("EPI_ISL_416565","EPI_ISL_416566","EPI_ISL_416567","EPI_ISL_416568","EPI_ISL_416569","EPI_ISL_416570","EPI_ISL_416571","EPI_ISL_416572","EPI_ISL_416573","EPI_ISL_416574","EPI_ISL_416575","EPI_ISL_416576","EPI_ISL_416577","EPI_ISL_416578","EPI_ISL_416579","EPI_ISL_416580","EPI_ISL_416581","EPI_ISL_416582","EPI_ISL_416583","EPI_ISL_416584","EPI_ISL_416585","EPI_ISL_416586","EPI_ISL_416587","EPI_ISL_416588","EPI_ISL_416589","EPI_ISL_416590","EPI_ISL_416591","EPI_ISL_416592","EPI_ISL_416593","EPI_ISL_416594","EPI_ISL_416595","EPI_ISL_416596","EPI_ISL_416597","EPI_ISL_416598","EPI_ISL_416599","EPI_ISL_416600","EPI_ISL_416601","EPI_ISL_416602","EPI_ISL_416603","EPI_ISL_416604","EPI_ISL_416605","EPI_ISL_416606","EPI_ISL_416607","EPI_ISL_416608","EPI_ISL_416609","EPI_ISL_416610","EPI_ISL_416611","EPI_ISL_416612","EPI_ISL_416613","EPI_ISL_416614","EPI_ISL_416615","EPI_ISL_416616","EPI_ISL_416617","EPI_ISL_416618","EPI_ISL_416619","EPI_ISL_416620","EPI_ISL_416621","EPI_ISL_416622","EPI_ISL_416623","EPI_ISL_416624","EPI_ISL_416625","EPI_ISL_416626","EPI_ISL_416627","EPI_ISL_416628","EPI_ISL_416629","EPI_ISL_416630","EPI_ISL_416631","EPI_ISL_416632","EPI_ISL_416633","EPI_ISL_416634","EPI_ISL_454749")
+gisaid_ids <- c("EPI_ISL_416565","EPI_ISL_416566","EPI_ISL_416567",
+                "EPI_ISL_416568","EPI_ISL_416569","EPI_ISL_416570",
+                "EPI_ISL_416571","EPI_ISL_416572","EPI_ISL_416573",
+                "EPI_ISL_416574","EPI_ISL_416575","EPI_ISL_416576",
+                "EPI_ISL_416577","EPI_ISL_416578","EPI_ISL_416579",
+                "EPI_ISL_416580","EPI_ISL_416581","EPI_ISL_416582",
+                "EPI_ISL_416583","EPI_ISL_416584","EPI_ISL_416585",
+                "EPI_ISL_416586","EPI_ISL_416587","EPI_ISL_416588",
+                "EPI_ISL_416589","EPI_ISL_416590","EPI_ISL_416591",
+                "EPI_ISL_416592","EPI_ISL_416593","EPI_ISL_416594",
+                "EPI_ISL_416595","EPI_ISL_416596","EPI_ISL_416597",
+                "EPI_ISL_416598","EPI_ISL_416599","EPI_ISL_416600",
+                "EPI_ISL_416601","EPI_ISL_416602","EPI_ISL_416603",
+                "EPI_ISL_416604","EPI_ISL_416605","EPI_ISL_416606",
+                "EPI_ISL_416607","EPI_ISL_416608","EPI_ISL_416609",
+                "EPI_ISL_416610","EPI_ISL_416611","EPI_ISL_416612",
+                "EPI_ISL_416613","EPI_ISL_416614","EPI_ISL_416615",
+                "EPI_ISL_416616","EPI_ISL_416617","EPI_ISL_416618",
+                "EPI_ISL_416619","EPI_ISL_416620","EPI_ISL_416621",
+                "EPI_ISL_416622","EPI_ISL_416623","EPI_ISL_416624",
+                "EPI_ISL_416625","EPI_ISL_416626","EPI_ISL_416627",
+                "EPI_ISL_416628","EPI_ISL_416629","EPI_ISL_416630",
+                "EPI_ISL_416631","EPI_ISL_416632","EPI_ISL_416633",
+                "EPI_ISL_416634","EPI_ISL_454749")
 
 ```
-For further processing, the GISAID metadata file, custom.metadata.tsv, as well as the alignment file called aligned_custom_data.fasta produced by the ncov pipeline, are placed in ~/data/. 
+
+For further processing, the GISAID metadata file,
+`custom.metadata.tsv`, as well as the alignment file called
+`aligned_custom_data.fasta` produced by the ncov pipeline, are placed
+in the `~/data` directory.
 
 ## Editing the initial FASTA
 
-We want a FASTA file that has identifiers consisting of the isolate name (i.e., the "DPXXXX" name) and the relative sequencing time (relative to the start of the cruise forward in time).
-
+We want a FASTA file that has identifiers consisting of the isolate
+name (i.e., the "DPXXXX" name) and the relative sequencing time
+(relative to the start of the cruise forward in time).
 
 ```{r}
 seqs_calendar <- ape::read.FASTA("./data/aligned_custom_data.fasta")
 
 metadata <- read_tsv("./data/custom.metadata.tsv")
 
-isolate_names <- gsub("Japan","",names(seqs_calendar)) 
+isolate_names <- gsub("Japan","",names(seqs_calendar))
 isolate_names <- gsub("/","",isolate_names)
 isolate_names <- gsub("2020","",isolate_names)
 
@@ -68,25 +106,29 @@ names(DNAbin) <- names
 
 ```
 
-The figure below shows the number of seqs_calendar obtained on each date.
+The figure below shows the number of `seqs_calendar` obtained on each date.
 
 ```{r}
+#| echo: false
 plot_dates(DNAbin)
 ```
 
 We can use method A to assign uniformly times to the sequences in a
 way that avoids conflicts with the timing of rate changes or the time
-series of unsequenced cases, and excluding sequence DP0321. Times are uniformly distributed within each day: there are 21 sequences on 15.02 (26th day), 23 on 16.02 (27th day) and 29 on 17.02 (28th day). We save this file as diamond.fasta as input for BEAST2. 
+series of unsequenced cases, and excluding sequence DP0321. Times are
+uniformly distributed within each day: there are 21 sequences on 15.02
+(26th day), 23 on 16.02 (27th day) and 29 on 17.02 (28th day). We save
+this file as `diamond.fasta` as input for BEAST2.
 
 ```{r}
 seqs_timed <- seqs_calendar
 names_times <- paste0(isolate_names[1:70],rep("/",70),c(seq(26+1/21,27-1/21,by=1/21),seq(27+1/23,28-1/23,by=1/23),seq(28+1/29,29-1/29,by=1/29) ))
 
-names(seqs_timed) <- names_times 
+names(seqs_timed) <- names_times
 write_fasta(seqs_timed, "./data/diamond.fasta")
 ```
 
-The figure below shows the new time stamps for each of the seqs_calendar.
+The figure below shows the new time stamps for each of the `seqs_calendar`.
 
 ```{r}
 #| echo: false
@@ -95,32 +137,34 @@ plot_times(seqs_timed)
 
 ## Offset of times used in the analysis to set relative times
 
-All times in the xml are specified relative to the time of the last sequence:
+All times in the XML are specified relative to the time of the last
+sequence:
 
 ```{r}
 last_seq_time <- get_present(seqs_calendar, seqs_timed)
 ```
 
-In absolute time from the first day of the cruise, this is at time 28.965517. Internally, BEAST2 sets this time as 0, and all other times are specified backwards in time in the xml.
-It follows that midnight on the last day of sequencing is:
-28.965517 - 29.0 = -0.034483
+In absolute time from the first day of the cruise, this is at time
+28.965517. Internally, BEAST2 sets this time as 0, and all other times
+are specified backwards in time in the XML. It follows that midnight
+on the last day of sequencing is: 28.965517 - 29.0 = -0.034483
 
-## Assigning times to time series events (disasterTimes)
+## Assigning times to time series events (`disasterTimes`)
+
 We assume the population is tested at midday on each day:
-Midday on the last day with a sequence:  
--0.034483 + 0.5 = 0.465517
 
-Midday on the following day is:  
--0.034483 - 0.5 = -0.534483
+Midday on the last day with a sequence: `-0.034483 + 0.5 = 0.465517`
+
+Midday on the following day is: `-0.034483 - 0.5 = -0.534483`
 
 ## Assigning times for prevalence estimates
-We estimate prevalence at 9AM on each day weekly. 
-With the same logic 9AM on day X in relative time corresponds to: 
--0.034483 + X.625 = X.590517
 
-After the last sequence
--0.034483 - X.375 = -X.409483
+We estimate prevalence at 9AM on each day weekly.
 
-## Parameter changes can happen at midnight 
-As shown above, midnight on any day X before the last sequence corresponds to the following:
-X.965517
+With the same logic 9AM on day X in relative time corresponds to: `-0.034483 + X.625 = X.590517`
+
+After the last sequence: `-0.034483 - X.375 = -X.409483`
+
+## Parameter changes can happen at midnight
+
+As shown above, midnight on any day X before the last sequence corresponds to the following: `X.965517`

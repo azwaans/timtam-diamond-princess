@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 # -*- mode:sh; -*-
-
-# This script runs a specified number of chains in parallel using ant and mcmc2.7.3
-
+#
+# Run MCMC
+# ========
+#
+# This script runs a specified number of chains in parallel using ant
+# and mcmc2.7.3
+#
 # Usage:
+# ------
+#
 # ./script_name NUM_CHAINS CHAIN_LEN
+#
 
 # check the number of input arguments
 if [[ $# -ne 2 ]]; then
@@ -13,10 +20,21 @@ if [[ $# -ne 2 ]]; then
     exit 1
 fi
 
+if [ ! -f ./data/diamond.fasta ]; then
+    echo "The file ./data/diamond.fasta does not exist."
+    echo "Please contact the author to obtain the file."
+    exit 1
+fi
+
 # check if the arguments are valid integers
 if ! [[ $1 =~ ^[0-9]+$ ]] || ! [[ $2 =~ ^[0-9]+$ ]]; then
     echo "Both arguments should be valid integers."
     exit 1
+fi
+
+# ensure the required output directory, out/log-files, exists
+if [ ! -d ./out/log-files ]; then
+	mkdir -p ./out/log-files
 fi
 
 NUM_CHAINS=$1

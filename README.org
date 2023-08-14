@@ -13,10 +13,11 @@ See the [[file:./model.org]] document which describes the model.
 
 #+caption: Figures and files
 #+name: tbl:figure-script
-| Results figure       | R script that generated it                                      |
-|----------------------+-----------------------------------------------------------------|
-| [[fig:data]]             | [[./R/preprocessing-part-3.R]]                                      |
-| [[fig:result-timeline]]  | [[./R/combine-ltt-and-histories.R]] and [[./R/postprocessing-part-4.R]] |
+| Results figure           | R script that generated it                                      |
+|--------------------------+-----------------------------------------------------------------|
+| [[fig:data]]                 | [[./R/preprocessing-part-3.R]]                                      |
+| [[fig:r0-estimates]]         | [[./R/combine-ltt-and-histories.R]] and [[./R/postprocessing-part-4.R]] |
+| [[fig:prevalence-estimates]] | [[./R/combine-ltt-and-histories.R]] and [[./R/postprocessing-part-4.R]] |
 
 #+caption: Data
 #+name: fig:data
@@ -24,11 +25,17 @@ See the [[file:./model.org]] document which describes the model.
 #+attr_html: :width 400px
 [[./out/manuscript/data-plot.png]]
 
-#+caption: Timeline
-#+name: fig:result-timeline
+#+caption: R0 estimates
+#+name: fig:r0-estimates
 #+attr_org: :width 500px
 #+attr_html: :width 400px
-[[./out/manuscript/timeline.png]]
+[[./out/manuscript/r0-estimates.png]]
+
+#+caption: Prevalence estimates
+#+name: fig:prevalence-estimates
+#+attr_org: :width 500px
+#+attr_html: :width 400px
+[[./out/manuscript/prevalence-estimates.png]]
 
 * Running analysis
 
