@@ -106,10 +106,8 @@ make_ribbonstep_df <- function(xs, ymins, ymaxs) {
 
 hist_hdi_df <-
   read.csv(hist_hdi_file) |>
-  mutate(history_dates = as.Date(-history_times, origin = date_of_last_seq))
-
-#' These estimates where obtained from figures in the manuscript after
-#' extracting the values with WebPlotDigitizer.
+  mutate(history_dates = as.Date(-history_times, origin = date_of_last_seq),
+         est_source = "timtam")
 
 ## Andréoletti
 andreoletti2022estimates_prev_df <-
@@ -117,36 +115,50 @@ andreoletti2022estimates_prev_df <-
     history_dates = hist_hdi_df$history_dates,
     HDIup = c(3.002684,  7.049955, 10.100358, 18.493290, 53.674918,  4.000000),
     HDIlow = c(1.002684,  1.049955,  3.100358,  8.493290, 42.674918,  1.000000),
-    mean = c(2.002684,  3.049955,  7.100358, 13.493290, 48.674918,  2.000000)
+    mean = c(2.002684,  3.049955,  7.100358, 13.493290, 48.674918,  2.000000),
+    est_source = "andreoletti2022estimates"
   )
+
+prev_plot_df <-
+  bind_rows(hist_hdi_df, andreoletti2022estimates_prev_df)
 
 plot_prevalence <-
   ggplot() +
-  geom_linerange(hist_hdi_df,
-                 mapping = aes(x = history_dates, ymin = HDIlow, ymax = HDIup),
-                 colour = palette_green) +
-  geom_point(hist_hdi_df,
-             mapping = aes(x = history_dates, y = mean),
-             colour = palette_green) +
-  geom_linerange(andreoletti2022estimates_prev_df,
-                 mapping = aes(x = history_dates, ymin = HDIlow, ymax = HDIup),
-                 colour = palette_purple) +
-  geom_point(andreoletti2022estimates_prev_df,
-             mapping = aes(x = history_dates, y = mean),
-             colour = palette_purple) +
-  geom_label(data = data.frame(x = rep(as.Date("2020-01-21"), 2),
-                               y = c(80,95),
-                               label = c("Andréoletti et al. (2022)",
-                                         "Timtam")),
-             mapping = aes(x = x, y = y, label = label),
-             size = 4,
-             hjust = 0, # so text is left aligned
-             fill = "white",
-             color = c(palette_purple, palette_green)) +
+  geom_label(
+    data = data.frame(x = rep(as.Date("2020-01-21"), 2),
+                      y = c(80,95),
+                      label = c("\u25b2 Andréoletti et al. (2022)",
+                                "\u25cf Timtam")),
+    mapping = aes(x = x, y = y, label = label),
+    size = 4,
+    hjust = 0, # so text is left aligned
+    fill = "white",
+    color = c(palette_purple, palette_green)
+  ) +
+  geom_linerange(
+    prev_plot_df,
+    mapping = aes(x = history_dates, ymin = HDIlow, ymax = HDIup,
+                  colour = est_source)
+  ) +
+  geom_point(
+    prev_plot_df,
+    mapping = aes(x = history_dates, y = mean,
+                  colour = est_source, shape = est_source),
+    size = 3,
+  ) +
+  scale_colour_manual(
+    values = c(palette_purple, palette_green),
+    labels = c("Andréoletti et al. (2022)", "Timtam")
+  ) +
+  scale_shape_manual(
+    values = c(17, 16),
+    labels = c("Andréoletti et al. (2022)", "Timtam")
+  ) +
   scale_y_continuous(name = "Prevalence") +
   scale_x_date(limits = date_range) +
   theme_bw() +
   theme(
+    legend.position = "none",
     axis.title.x = element_blank(),
     axis.text = element_text(size = 7),
     axis.text.x = element_text(angle = -40, hjust = 0)
