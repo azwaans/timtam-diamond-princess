@@ -1,5 +1,6 @@
 library(dplyr)
 library(ggplot2)
+library(ggpattern)
 library(reshape2)
 
 disaster_data_csv <- "out/disaster-data.csv"
@@ -16,7 +17,7 @@ disaster_df <-
   disaster_data_csv |>
   read.csv() |>
   mutate(
-    type = "cases",
+    type = "Cases",
     time = floor(time)
   )
 sample_df <-
@@ -30,7 +31,7 @@ sample_df <-
   group_by(time) |>
   summarise(count = sum(count)) |>
   mutate(
-    type = "sequences",
+    type = "Sequences",
     time = 28 - time
   ) |>
   as.data.frame()
@@ -46,15 +47,12 @@ interval_df <- data.frame(
                        "2020-02-27", "2020-02-19", "2020-02-17")),
   interval = c("Cruise", "Sympt. testing", "Increased testing",
                "Harbour quarantine", "Cabin quarantine", "Sequencing"),
-  y = 15 * c(2, 3, 4, 5, 6, 2) + 100
+  y = 15 * c(1, 2, 3, 4, 5, 2) + 80
 )
 
 
-data_gg <- ggplot() +
-  geom_col(
-    data = data_df,
-    mapping = aes(x = date, y = count, colour = type, fill = type)
-  ) +
+data_gg <-
+  ggplot() +
   geom_segment(
     data = interval_df,
     mapping = aes(x = start_date, xend = end_date, y = y, yend = y)
@@ -66,28 +64,33 @@ data_gg <- ggplot() +
   geom_text(
     data = interval_df,
     mapping = aes(x = start_date, y = y, label = interval),
-    vjust = -1,
-    hjust = 0
+    vjust = -1, hjust = 0
+  ) +
+  geom_col_pattern(
+    data = data_df,
+    mapping = aes(x = date, y = count,
+                  pattern = type),
+    fill = "white",
+    pattern_spacing = 0.015, pattern_angle = 45
+  ) +
+  scale_pattern_manual(
+    values = c("stripe", "crosshatch")
   ) +
   scale_y_continuous(
     breaks = seq(from = 0, to = 120, by = 40),
     minor_breaks = seq(from = 0, to = 120, by = 20),
-    limits = c(0, max(interval_df$y) + 10)
+    limits = c(0, max(interval_df$y) + 10),
+    expand = expansion(mult = c(0, 0.02))
   ) +
-  scale_fill_brewer(type = "qual", palette = 2) +
-  scale_colour_brewer(type = "qual", palette = 2) +
-  labs(x = NULL, y = NULL, fill = NULL, colour = NULL) +
+  labs(x = NULL, y = NULL, pattern = NULL, pattern_angle = NULL) +
   theme_bw() +
   theme(
-    legend.position = c(0.9, 0.5)
+    legend.position = c(0.2, 0.3)
   )
 
 ggsave(
   filename = "out/manuscript/data-plot.png",
   plot = data_gg,
   height = 0.75 * 14.8, width = 21.0,
-  ## A5 height = 14.8, width = 21.0,
-  ## A6 height = 10.5, width = 14.8,
-  ## A7 height = 7.4, width = 10.5,
   units = "cm"
 )
