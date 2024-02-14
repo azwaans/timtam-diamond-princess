@@ -6,15 +6,16 @@
 #' from the files specified below. Note that there are also a couple of dates
 #' hard coded there to make some things a bit simpler.
 #'
-#' There are three sections:
-#' - Configuration :: where some files and dates are hard coded
-#' - Helper functions :: where helper functions are defined.
-#' - Main figure generation :: where the final result is made.
-#'
 #' Usage
 #' =====
 #'
-#' $ Rscript ./R/postprocessing-part-4.R
+#' $ ./R/postprocessing-part-4.R -v \\
+#' -x xml/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.xml \\
+#' -t out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories-diamond.1.trees \\
+#' -p out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.1.log \\
+#' -r out/manuscript/r0-estimates.png \\
+#' -n out/manuscript/prevalence-estimates.png \\
+#'
 #'
 library(ggplot2)
 library(xml2)
@@ -22,32 +23,55 @@ library(dplyr)
 library(cowplot)
 library(gridExtra)
 library(RColorBrewer)
-palette <- brewer.pal(5, "Dark2")[1:3]
-palette_green <- "#1B9E77"
-palette_orange <- "#D95F02"
-palette_purple <- "#7570B3"
+library(argparse)
 
-## Configuration
-## =============
+parser <- ArgumentParser()
 
-beast_xml <- "./xml/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.xml" # nolint
-hist_hdi_file <- "./out/prevalence-estimate-HKY-weekly-histories.csv"
-param_log_file <- "./out/log-files/timtam-timeseries-stage-2-with-removal-prevalence-HKY-weekly-histories.15607.log" # nolint
-date_of_last_seq <- "2020-02-17"
-date_range <- as.Date(c("2020-01-20", "2020-02-27"))
-output_png_r0 <- "./out/manuscript/r0-estimates.png"
-output_png_prev <- "./out/manuscript/prevalence-estimates.png"
+parser$add_argument(
+  "-v",
+  "--verbose",
+  action = "store_true",
+  default = FALSE,
+  help = "Verbose output (default FALSE)"
+)
+parser$add_argument(
+  "-x",
+  "--xml-file",
+  type = "character",
+  help = "Filepath for BEAST XML."
+)
+parser$add_argument(
+  "-t",
+  "--trees-file",
+  type = "character",
+  help = "Filepath for log file containing trees."
+)
+parser$add_argument(
+  "-p",
+  "--parameter-file",
+  type = "character",
+  help = "Filepath for log file containing the parameters."
+)
+parser$add_argument(
+  "-c",
+  "--hdi-file",
+  type = "character",
+  help = "Filepath for the csv file containing the combined prevalence HDIs."
+)
+parser$add_argument(
+  "-r",
+  "--output-file-r",
+  type = "character",
+  help = "Filepath for the png to write Re plot to."
+)
+parser$add_argument(
+  "-n",
+  "--output-file-n",
+  type = "character",
+  help = "Filepath for the png to write prevalence plot to."
+)
 
-## Check that the input files exist
-if (!file.exists(beast_xml)) {
-  stop("The beast xml file does not exist.")
-}
-if (!file.exists(hist_hdi_file)) {
-  stop("The history HDI file does not exist.")
-}
-if (!file.exists(param_log_file)) {
-  stop("The parameter log file does not exist.")
-}
+
 
 ## Helper functions
 ## ================
@@ -98,122 +122,6 @@ make_ribbonstep_df <- function(xs, ymins, ymaxs) {
              ymax = rep(ymaxs, each = 2))
 }
 
-## ====================
-## End helper functions
-
-## Main figure generation
-## ======================
-
-hist_hdi_df <-
-  read.csv(hist_hdi_file) |>
-  mutate(history_dates = as.Date(-history_times, origin = date_of_last_seq),
-         est_source = "timtam")
-
-## Andréoletti
-andreoletti2022estimates_prev_df <-
-  data.frame(
-    history_dates = hist_hdi_df$history_dates,
-    HDIup = c(3.002684,  7.049955, 10.100358, 18.493290, 53.674918,  4.000000),
-    HDIlow = c(1.002684,  1.049955,  3.100358,  8.493290, 42.674918,  1.000000),
-    mean = c(2.002684,  3.049955,  7.100358, 13.493290, 48.674918,  2.000000),
-    est_source = "andreoletti2022estimates"
-  )
-
-prev_plot_df <-
-  bind_rows(hist_hdi_df, andreoletti2022estimates_prev_df)
-
-plot_prevalence <-
-  ggplot() +
-  geom_label(
-    data = data.frame(x = rep(as.Date("2020-01-21"), 2),
-                      y = c(80,95),
-                      label = c("\u25b2 Andréoletti et al. (2022)",
-                                "\u25cf Timtam")),
-    mapping = aes(x = x, y = y, label = label),
-    size = 4,
-    hjust = 0, # so text is left aligned
-    fill = "white",
-    color = c(palette_purple, palette_green)
-  ) +
-  geom_linerange(
-    prev_plot_df,
-    mapping = aes(x = history_dates, ymin = HDIlow, ymax = HDIup,
-                  colour = est_source)
-  ) +
-  geom_point(
-    prev_plot_df,
-    mapping = aes(x = history_dates, y = mean,
-                  colour = est_source, shape = est_source),
-    size = 3,
-  ) +
-  scale_colour_manual(
-    values = c(palette_purple, palette_green),
-    labels = c("Andréoletti et al. (2022)", "Timtam")
-  ) +
-  scale_shape_manual(
-    values = c(17, 16),
-    labels = c("Andréoletti et al. (2022)", "Timtam")
-  ) +
-  scale_y_continuous(name = "Prevalence") +
-  scale_x_date(limits = date_range) +
-  theme_bw() +
-  theme(
-    legend.position = "none",
-    axis.title.x = element_blank(),
-    axis.text = element_text(size = 7),
-    axis.text.x = element_text(angle = -40, hjust = 0)
-  )
-
-#' Because we want to be able to compare things on calendar times we need to do
-#' a little bit of messy work to get the change times in terms of absolute
-#' dates.
-r0_change_dates <-
-  read_xml(beast_xml) |>
-  xml_find_first(xpath = "//parameter[@name=\'r0ChangeTimes\']") |>
-  xml_text() |>
-  strsplit(split = " ") |>
-  unlist() |>
-  as.numeric() |>
-  (\(x) as.Date(-x, origin = date_of_last_seq))() |>
-  c(date_range) |>
-  sort()
-
-post_r0_df <- read_beast2_log(param_log_file) |> select(starts_with("TTR0"))
-plot_df <- bayestestR::hdi(post_r0_df) |> as.data.frame()
-plot_df$point_est <- colMeans(post_r0_df)
-
-#' Because we don't want the step function to end too early, we duplicate the
-#' last value so it continues on until the end of the study period.
-plot_df <- rbind(plot_df, tail(plot_df, 1))
-plot_df$xs <- r0_change_dates
-plot_df$ys <- plot_df$point_est
-plot_rbn_df <-
-  make_ribbonstep_df(xs = plot_df$xs,
-                     ymins = head(plot_df$CI_low, -1),
-                     ymaxs = head(plot_df$CI_high, -1))
-
-vaughan2020estimates_df <- data.frame(
-  xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
-  ys = c(5.361, 1.84, 1.84)
-)
-
-vaughan2020estimates_rbn_df <-
-  make_ribbonstep_df(
-    xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
-    ymins = c(7.6752, 3.2938),
-    ymaxs = c(2.1708, 1.5002)
-  )
-
-andreoletti2022estimates_df <- data.frame(
-  xs = r0_change_dates,
-  ys = c(4.01, 1.22, 0.996, 0.996)
-)
-andreoletti2022estimates_rbn_df <- make_ribbonstep_df(
-  xs = r0_change_dates,
-  ymins = c(1.02, 0.97, 0.891),
-  ymaxs = c(7.54, 1.48, 1.11)
-)
-
 ## Using a function ensures that the style of the figures is
 ## consistent across each set of estimates and makes it easier to
 ## construct the figures.
@@ -247,52 +155,199 @@ make_r0_plot <- function(rbn_df, est_df, colour, label, hjust, y_text_p = TRUE) 
     }
 }
 
-plot_r0_vaughan2020estimates <-
-  make_r0_plot(vaughan2020estimates_rbn_df,
-               vaughan2020estimates_df,
-               palette_orange,
-               "Vaughan et al. (2020)",
-               hjust = 1, y_text_p = FALSE)
+## ====================
+## End helper functions
 
-plot_r0_andreoletti2022estimates <-
-  make_r0_plot(andreoletti2022estimates_rbn_df,
-               andreoletti2022estimates_df,
-               palette_purple,
-               "Andréoletti et al. (2022)",
-               hjust = 0.9, y_text_p = FALSE)
-
-plot_r0_timtam <-
-  make_r0_plot(plot_rbn_df,
-               plot_df,
-               palette_green,
-               "Timtam",
-               hjust = 2.85) +
-  scale_y_continuous(limits = c(0, 9),
-                     ## breaks = 1:8,
-                     name = "Reproduction number") +
-  theme(axis.title.y = element_text(size = 10))
-
-## We use gridExtra::grid.arrange() because it is more flexible than
-## cowplot::plot_grid(). The fudge factor here came from viewing
-## measuring the panel widths on my screen to ensure that they are
-## equal. The difference stems from the presence of the y-axis labels
-## in the first panel.
-tmp_fudge_factor <- 1.14
-plot_r0 <-
-  grid.arrange(
-    plot_r0_timtam,
-    plot_r0_andreoletti2022estimates,
-    plot_r0_vaughan2020estimates,
-    ncol = 3, padding = unit(0, "mm"),
-    widths = c(tmp_fudge_factor, 1.0, 1.0)
+main <- function(args) {
+  beast_xml <- args$xml_file
+  param_log_file <- args$parameter_file
+  hist_hdi_file <- args$hdi_file
+  trees_file <- args$trees_file
+  output_png_r0 <- args$output_file_r
+  output_png_prev <- args$output_file_n
+  
+  # set colors
+  palette <- brewer.pal(5, "Dark2")[1:3]
+  palette_green <- "#1B9E77"
+  palette_orange <- "#D95F02"
+  palette_purple <- "#7570B3"
+  
+  ## Check that the input files exist
+  if (!file.exists(beast_xml)) {
+    stop("The beast xml file does not exist.")
+  }
+  if (!file.exists(hist_hdi_file)) {
+    stop("The history HDI file does not exist.")
+  }
+  if (!file.exists(param_log_file)) {
+    stop("The parameter log file does not exist.")
+  }
+  
+  date_of_last_seq <- "2020-02-17"
+  date_range <- as.Date(c("2020-01-20", "2020-02-27"))
+  
+  hist_hdi_df <-
+    read.csv(hist_hdi_file) |>
+    mutate(history_dates = as.Date(-history_times, origin = date_of_last_seq),
+           est_source = "timtam")
+  
+  ## Andréoletti
+  andreoletti2022estimates_prev_df <-
+    data.frame(
+      history_dates = hist_hdi_df$history_dates,
+      HDIup = c(3.002684,  7.049955, 10.100358, 18.493290, 53.674918,  4.000000),
+      HDIlow = c(1.002684,  1.049955,  3.100358,  8.493290, 42.674918,  1.000000),
+      mean = c(2.002684,  3.049955,  7.100358, 13.493290, 48.674918,  2.000000),
+      est_source = "andreoletti2022estimates"
+    )
+  
+  prev_plot_df <-
+    bind_rows(hist_hdi_df, andreoletti2022estimates_prev_df)
+  
+  plot_prevalence <-
+    ggplot() +
+    geom_label(
+      data = data.frame(x = rep(as.Date("2020-01-21"), 2),
+                        y = c(80,95),
+                        label = c("\u25b2 Andréoletti et al. (2022)",
+                                  "\u25cf Timtam")),
+      mapping = aes(x = x, y = y, label = label),
+      size = 4,
+      hjust = 0, # so text is left aligned
+      fill = "white",
+      color = c(palette_purple, palette_green)
+    ) +
+    geom_linerange(
+      prev_plot_df,
+      mapping = aes(x = history_dates, ymin = HDIlow, ymax = HDIup,
+                    colour = est_source)
+    ) +
+    geom_point(
+      prev_plot_df,
+      mapping = aes(x = history_dates, y = mean,
+                    colour = est_source, shape = est_source),
+      size = 3,
+    ) +
+    scale_colour_manual(
+      values = c(palette_purple, palette_green),
+      labels = c("Andréoletti et al. (2022)", "Timtam")
+    ) +
+    scale_shape_manual(
+      values = c(17, 16),
+      labels = c("Andréoletti et al. (2022)", "Timtam")
+    ) +
+    scale_y_continuous(name = "Prevalence") +
+    scale_x_date(limits = date_range) +
+    theme_bw() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text = element_text(size = 7),
+      axis.text.x = element_text(angle = -40, hjust = 0)
+    )
+  
+  #' Because we want to be able to compare things on calendar times we need to do
+  #' a little bit of messy work to get the change times in terms of absolute
+  #' dates.
+  r0_change_dates <-
+    read_xml(beast_xml) |>
+    xml_find_first(xpath = "//parameter[@name=\'r0ChangeTimes\']") |>
+    xml_text() |>
+    strsplit(split = " ") |>
+    unlist() |>
+    as.numeric() |>
+    (\(x) as.Date(-x, origin = date_of_last_seq))() |>
+    c(date_range) |>
+    sort()
+  
+  post_r0_df <- read_beast2_log(param_log_file) |> select(starts_with("TTR0"))
+  plot_df <- bayestestR::hdi(post_r0_df) |> as.data.frame()
+  plot_df$point_est <- colMeans(post_r0_df)
+  
+  #' Because we don't want the step function to end too early, we duplicate the
+  #' last value so it continues on until the end of the study period.
+  plot_df <- rbind(plot_df, tail(plot_df, 1))
+  plot_df$xs <- r0_change_dates
+  plot_df$ys <- plot_df$point_est
+  plot_rbn_df <-
+    make_ribbonstep_df(xs = plot_df$xs,
+                       ymins = head(plot_df$CI_low, -1),
+                       ymaxs = head(plot_df$CI_high, -1))
+  
+  vaughan2020estimates_df <- data.frame(
+    xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
+    ys = c(5.361, 1.84, 1.84)
   )
+  
+  vaughan2020estimates_rbn_df <-
+    make_ribbonstep_df(
+      xs = as.Date(c("2020-01-20", "2020-02-03", "2020-02-27")),
+      ymins = c(7.6752, 3.2938),
+      ymaxs = c(2.1708, 1.5002)
+    )
+  
+  andreoletti2022estimates_df <- data.frame(
+    xs = r0_change_dates,
+    ys = c(4.01, 1.22, 0.996, 0.996)
+  )
+  andreoletti2022estimates_rbn_df <- make_ribbonstep_df(
+    xs = r0_change_dates,
+    ymins = c(1.02, 0.97, 0.891),
+    ymaxs = c(7.54, 1.48, 1.11)
+  )
+  
+  plot_r0_vaughan2020estimates <-
+    make_r0_plot(vaughan2020estimates_rbn_df,
+                 vaughan2020estimates_df,
+                 palette_orange,
+                 "Vaughan et al. (2024)",
+                 hjust = 1, y_text_p = FALSE)
+  
+  plot_r0_andreoletti2022estimates <-
+    make_r0_plot(andreoletti2022estimates_rbn_df,
+                 andreoletti2022estimates_df,
+                 palette_purple,
+                 "Andréoletti et al. (2022)",
+                 hjust = 0.9, y_text_p = FALSE)
+  
+  plot_r0_timtam <-
+    make_r0_plot(plot_rbn_df,
+                 plot_df,
+                 palette_green,
+                 "Timtam",
+                 hjust = 2.85) +
+    scale_y_continuous(limits = c(0, 9),
+                       ## breaks = 1:8,
+                       name = "Reproduction number") +
+    theme(axis.title.y = element_text(size = 10))
+  
+  ## We use gridExtra::grid.arrange() because it is more flexible than
+  ## cowplot::plot_grid(). The fudge factor here came from viewing
+  ## measuring the panel widths on my screen to ensure that they are
+  ## equal. The difference stems from the presence of the y-axis labels
+  ## in the first panel.
+  tmp_fudge_factor <- 1.14
+  plot_r0 <-
+    grid.arrange(
+      plot_r0_timtam,
+      plot_r0_andreoletti2022estimates,
+      plot_r0_vaughan2020estimates,
+      ncol = 3, padding = unit(0, "mm"),
+      widths = c(tmp_fudge_factor, 1.0, 1.0)
+    )
+  
+  ggsave(filename = output_png_r0,
+         plot = plot_r0,
+         height = 7.4, width = 20,
+         units = "cm")
+  
+  ggsave(filename = output_png_prev,
+         plot = plot_prevalence,
+         height = 7.4, width = 10.5, # A7
+         units = "cm")
+ 
+  
+}
 
-ggsave(filename = output_png_r0,
-       plot = plot_r0,
-       height = 7.4, width = 20,
-       units = "cm")
-
-ggsave(filename = output_png_prev,
-       plot = plot_prevalence,
-       height = 7.4, width = 10.5, # A7
-       units = "cm")
+args <- parser$parse_args()
+main(args)
