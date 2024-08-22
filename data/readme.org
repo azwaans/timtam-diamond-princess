@@ -13,7 +13,7 @@ Yes, splitting the model and the data in this fashion goes against
 some of the core ideas of BEAST2, but we would prefer to err on the
 side of caution with regards to sharing sequences via GitHub.
 
-Case counts are obtained from the CSSE's [[https://github.com/CSSEGISandData/COVID-19][COVID-19 Data Repository]] and corrected with daily reports from the [[https://www.mhlw.go.jp/stf/houdou/houdou_list_202002.html][Japanese Ministry of Health, Labour and Welfare]]. To correct for days with missing reports during the quarantine, total reported new cases from following days are distributed to attribute cases on each day. Unsequenced case counts are obtained by substracting cases counts by sequence counts on corresponding days. 
+Case counts are obtained from the CSSE's [[https://github.com/CSSEGISandData/COVID-19][COVID-19 Data Repository]] and corrected with daily reports from the [[https://www.mhlw.go.jp/stf/houdou/houdou_list_202002.html][Japanese Ministry of Health, Labour and Welfare]]. To correct for days with missing reports during the quarantine, total reported new cases from following days are distributed to attribute cases on each day. Unsequenced case counts are obtained by substracting cases counts by sequence counts on corresponding days. See [[file:./time-series-cases.csv]] for the final, resulting, processed time series used in this analysis.
 
 * Sequence descriptors
 
