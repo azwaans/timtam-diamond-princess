@@ -1,8 +1,8 @@
 #+title: Data
 
-To run this analysis, there should be a file called =diamond.fasta= in
-this directory. The descriptors of the sequences are listed below. The
-hash of the file is
+To run this analysis, there should be an sequence alignment file called =diamond.fasta= in
+this directory. The descriptors of the sequences are listed below. These sequences are obtained from GISAID's [[https://gisaid.org/][EpiCoV]], and aligned using the pipeline for custom data provided in [[https://docs.nextstrain.org/projects/ncov/en/latest/tutorial/custom-data.html][Nextstrain]]. The
+hash of the resulting input alignment file is: 
 
 #+begin_src
 $ sha256sum diamond.fasta
@@ -13,11 +13,11 @@ Yes, splitting the model and the data in this fashion goes against
 some of the core ideas of BEAST2, but we would prefer to err on the
 side of caution with regards to sharing sequences via GitHub.
 
-Case counts are obtained from https://github.com/CSSEGISandData/COVID-19 and corrected with daily reports from the Japanese Ministry of Health, Labour and Welfare https://www.mhlw.go.jp/stf/houdou/houdou_list_202002.html. To correct for days with missing reports during the quarantine, total reported new cases from following days are distributed to attribute cases on each day. Unsequenced case counts are obtained by substracting cases counts by sequence counts on corresponding days. 
+Case counts are obtained from the CSSE's [[https://github.com/CSSEGISandData/COVID-19][COVID-19 Data Repository]] and corrected with daily reports from the [[https://www.mhlw.go.jp/stf/houdou/houdou_list_202002.html][Japanese Ministry of Health, Labour and Welfare]]. To correct for days with missing reports during the quarantine, total reported new cases from following days are distributed to attribute cases on each day. Unsequenced case counts are obtained by substracting cases counts by sequence counts on corresponding days. 
 
 * Sequence descriptors
 
-To get the sequence descriptors we use =cat diamond.fasta | grep ">"=.
+To get the sequence descriptors we use =cat diamond.fasta | grep ">"=. The following output shows sequence descriptors that combine the GISAID ID (strain number) and the attributed collection date in days sincce the start of the cruise ("GISAID-ID_date").
 
 #+begin_src
 DP0005_26.047619047619
