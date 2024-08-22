@@ -5,6 +5,10 @@ during an outbreak of SARS-CoV-2 onboard the Diamond Princess. The
 analysis is based off a previous analysis from [[https://doi.org/10.1093/sysbio/syac037][Andréoletti /et al/
 (2022)]] and uses the [[https://aezarebski.github.io/timtam/][TimTam]] package for BEASTv2.
 
+* Data
+
+See the [[file:./data/readme.org]] document which describes the sequence and case data used in this analysis.
+
 * Model
 
 See the [[file:./model.org]] document which describes the model.
