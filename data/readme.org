@@ -1,7 +1,7 @@
 #+title: Data
 
 To run this analysis, there should be an sequence alignment file called =diamond.fasta= in
-this directory. The descriptors of the sequences are listed below. These sequences are obtained from GISAID's [[https://gisaid.org/][EpiCoV]], and aligned using the pipeline for custom data provided in [[https://docs.nextstrain.org/projects/ncov/en/latest/tutorial/custom-data.html][Nextstrain]]. The
+this directory. The descriptors of the sequences are listed below. These sequences are obtained from GISAID's [[https://gisaid.org/][EpiCoV]] (and also available on GenBank), and aligned using the pipeline for custom data provided in [[https://docs.nextstrain.org/projects/ncov/en/latest/tutorial/custom-data.html][Nextstrain]]. The
 hash of the resulting input alignment file is: 
 
 #+begin_src
@@ -17,7 +17,7 @@ Case counts are obtained from the CSSE's [[https://github.com/CSSEGISandData/COV
 
 * Sequence descriptors
 
-To get the sequence descriptors we use =cat diamond.fasta | grep ">"=. The following output shows sequence descriptors that combine the GISAID ID (strain number) and the attributed collection date in days sincce the start of the cruise ("GISAID-ID_date").
+To get the sequence descriptors we use =cat diamond.fasta | grep ">"=. The following output shows sequence descriptors that combine their isolate number (as found on GISAID/GenBank) and the attributed collection date in days sincce the start of the cruise ("GISAID-ID_date").
 
 #+begin_src
 DP0005_26.047619047619
