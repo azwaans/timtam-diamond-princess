@@ -262,6 +262,9 @@ main <- function(args) {
   
   post_r0_df <- read_beast2_log(param_log_file) |> select(starts_with("TTR0"))
   plot_df <- bayestestR::hdi(post_r0_df) |> as.data.frame()
+  if (any(is.na(plot_df))) {
+    stop("Stopping because plot_df has NA values. Double check the log file used.")
+  }
   plot_df$point_est <- colMeans(post_r0_df)
   
   #' Because we don't want the step function to end too early, we duplicate the
@@ -336,11 +339,23 @@ main <- function(args) {
       widths = c(tmp_fudge_factor, 1.0, 1.0)
     )
   
+  saveRDS(list(
+      plot_r0_timtam,
+      plot_r0_andreoletti2022estimates,
+    plot_r0_vaughan2020estimates),
+    file = gsub(".png", "-components.rds", output_png_r0)
+    )
   ggsave(filename = output_png_r0,
          plot = plot_r0,
          height = 7.4, width = 20,
          units = "cm")
   
+  saveRDS(
+    list(gg = plot_prevalence,
+         data_df = prev_plot_df,
+         purple = palette_purple,
+         green = palette_green),
+    file = gsub(".png", "-components.rds", output_png_prev))
   ggsave(filename = output_png_prev,
          plot = plot_prevalence,
          height = 7.4, width = 10.5, # A7
