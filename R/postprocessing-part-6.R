@@ -11,6 +11,8 @@ LINE_SIZE <- 1.0
 POINT_SIZE <- 4
 ANNOTATION_SIZE <- 5
 
+FIGURE_WIDTH <- 160 # mm
+
 disaster_data_csv <- "out/disaster-data.csv"
 sample_times_csv <- "out/diamond-times.csv"
 r0_plot_components_rds <- "out/manuscript/r0-estimates-components.rds"
@@ -159,7 +161,10 @@ prev_plot_gg <-
 
 
 timed_gg <- plot_grid(data_gg, prev_plot_gg, align = "vh", ncol = 1, rel_heights = c(1, 0.7))
-ggsave(plot_panels_ab, timed_gg, width = 10, height = 7, dpi = 300)
+ggsave(plot_panels_ab, timed_gg,
+       width = FIGURE_WIDTH, height = 160,
+       units = "mm",
+       dpi = 300)
 
 
 
@@ -194,4 +199,7 @@ r0_gg <- plot_grid(
   align = "t", ncol = 3, rel_heights = c(1, 1, 1)
 )
 
-ggsave(plot_panel_c, r0_gg, width = 10, height = 2.88, dpi = 300)
+ggsave(plot_panel_c, r0_gg,
+       width = FIGURE_WIDTH, height = 65,
+       units = "mm",
+       dpi = 300)
