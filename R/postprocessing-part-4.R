@@ -139,7 +139,7 @@ make_r0_plot <- function(rbn_df, est_df, colour, label, hjust, y_text_p = TRUE) 
     ## make sure that the text is aligned to the right of the specified point
     geom_label(data = data.frame(x = as.Date("2020-01-21"), y = 8.5),
                mapping = aes(x = x, y = y, label = label),
-               size = 4,
+               size = 3.4,
                hjust = 0,
                fill = "white",
                color = colour) +

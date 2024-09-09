@@ -196,7 +196,8 @@ r0_gg <- plot_grid(
   r0_comp_a,
   r0_comp_b,
   r0_comp_c,
-  align = "t", ncol = 3, rel_heights = c(1, 1, 1)
+  align = "t", ncol = 3, rel_heights = c(1, 1, 1),
+  rel_widths = c(1.28, 1, 1)
 )
 
 ggsave(plot_panel_c, r0_gg,
