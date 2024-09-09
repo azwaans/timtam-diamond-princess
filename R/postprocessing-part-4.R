@@ -212,7 +212,7 @@ main <- function(args) {
                         label = c("\u25b2 Andréoletti et al. (2022)",
                                   "\u25cf Timtam")),
       mapping = aes(x = x, y = y, label = label),
-      size = 4,
+      size = 3.4,
       hjust = 0, # so text is left aligned
       fill = "white",
       color = c(palette_purple, palette_green)
